@@ -23,14 +23,32 @@ import java.util.Date;
 @Slf4j
 public class MyInterceptor implements HandlerInterceptor {// 实现HandlerInterceptor接口
 
+    private void handleFalseResponse(HttpServletResponse response)
+            throws Exception {
+        response.setStatus(200);
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+
+        response.getWriter().write("{\"message\":\"请先登录\"}");
+        response.getWriter().flush();
+    }
     /**
      * 访问控制器方法前执行
      */
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
             throws Exception {
-        log.info(new Date() + "--preHandle:" + request.getRequestURL());
-        return true;
+        if (request.getRequestURI().contains("/login")) {// 登录方法直接放行
+            return true;
+        } else {// 其他方法需要先检验是否存在Session
+            if (request.getSession().getAttribute("LOGIN_NAME") == null) {//未登录的不允许访问
+                // 拦截处理
+                handleFalseResponse(response);
+                return false;
+            } else {
+                return true;
+            }
+        }
     }
 
     /**
